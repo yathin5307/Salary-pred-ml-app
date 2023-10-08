@@ -80,11 +80,45 @@ def show_explore_page():
         st.title("Explore Software Engineer Salaries")
         st.write(""" Developer Survey 2023""")
 
+        data=df['Country']. value_counts()
+        fig1, ax2=plt.subplots()
+        data.plot(kind='barh', ax=ax2)
+        ax2.set_xlabel('Count')
+        ax2.set_ylabel('Country')
+        st.write(""" #### Number of data from different countries """)
+
+        st.pyplot(fig1)
+
+        st.write(""" #### Mean salary based on Country """)
+
+        data2=df.groupby(["Country"])["Salary"].mean().sort_values(ascending=True)
+        st.bar_chart(data2)
+
+        st.write(""" #### Mean salary based on Experience """)
+        data3=df.groupby(["Experience"])["Salary"].mean().sort_values(ascending=True)
+        st.line_chart(data3)
 
 
 # Define your load_model function and load the necessary data as you did in your code
 data = pickle.load(open('saved_file.pkl','rb'))
 
+def load_data():
+    df=pd.read_csv("salary.csv")
+    df=df[["Country", "EdLevel", "Experience", "Salary"]]
+    df=df[df["Salary"].notnull()]
+    df=df.dropna()
+
+    country_map=shorten_categories(df.Country.value_counts(), 400)
+    df['Country']=df['Country'].map(country_map)
+    df=df[df['Salary']<=200000]
+    df=df[df['Salary']>=10000]
+    df=df[df['Country']!='Other']
+
+    df['Experience']=df['Experience'].apply(clean_exp)
+    df['EdLevel']=df['EdLevel'].apply(clean_edu)
+    return df
+
+df=load_data()
 regressor = data["model"]
 le_country = data["le_country"]
 le_education = data["le_education"]
