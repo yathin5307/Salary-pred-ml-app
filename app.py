@@ -3,6 +3,60 @@ import pickle
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import requests
+
+# Currency Conversion Function
+def convert_currency(amount, base_currency, target_currency):
+
+    print(target_currency)
+    print(amount)
+    print(base_currency)
+    # Construct the URL with the parameters
+    url = f"https://v6.exchangerate-api.com/v6/c0cf612414417e0c16d3433a/pair/{base_currency}/{target_currency}/{amount}"
+
+    # Make a GET request to the API
+    response = requests.get(url)
+
+    if response.status_code == 200:
+    # Parse the JSON response
+        data = response.json()
+    
+    # Extract the conversion_result
+        conversion_result = data.get("conversion_result")
+        if conversion_result is not None:
+            return conversion_result
+        else:
+            st.subheader("no conversion result")
+            return None
+    else:
+        st.subheader(f"API request failed with status code: {response.status_code}")
+        return None
+
+def get_currency_for_country(country):
+    # Define a dictionary to map countries to currencies
+    country_to_currency = {
+        "United States of America": "USD",
+        "Germany": "EUR",
+        "United Kingdom of Great Britain and Northern Ireland": "GBP",
+        "Canada": "CAD",
+        "India": "INR",
+        "France": "EUR",
+        "Netherlands": "EUR",
+        "Australia": "AUD",
+        "Brazil": "BRL",
+        "Spain": "EUR",
+        "Sweden": "SEK",
+        "Italy": "EUR",
+        "Poland": "PLN",
+        "Switzerland": "CHF",
+        "Denmark": "DKK",
+        "Norway": "NOK",
+        "Israel": "ILS"
+    }
+
+    # Return the currency for the selected country
+    return country_to_currency.get(country, "USD")  # Default to USD if the country is not found in the dictionary
+
 
 def shorten_categories(categories, cutoff):
     categorical_map={}
@@ -73,8 +127,17 @@ def show_predict_page():
             X[:, 1]=le_education.transform(X[:, 1])
             X=X.astype(float)
 
-            salary=regressor.predict(X)
-            st.subheader(f"The estimated salary is ${salary[0]:.2f}")
+            salary1=regressor.predict(X)
+            salary = salary1[0]
+            # Convert the predicted salary to the user's selected currency
+            selected_currency = get_currency_for_country(country)  # Replace with your own function to get the currency for the country
+            converted_salary = convert_currency(salary, "USD", selected_currency)
+
+            # Display the converted salary in the user's local currency
+            if converted_salary is not None:
+                st.subheader(f"Predicted Salary ({selected_currency}): {converted_salary:.2f}")
+            else:
+                st.subheader(f"The estimated salary is ${salary[0]:.2f}")
 
 def show_explore_page():
         st.title("Explore Software Engineer Salaries")
